@@ -88,7 +88,7 @@
     // Run OCR with Tesseract.js
     function runOCR(image) {
       output.textContent = "⏳ Processing...";
-      Tesseract.recognize(image, 'eng', { logger: m => console.log(m) })
+      Tesseract.recognize(image, 'esp', { logger: m => console.log(m) })
         .then(({ data: { text } }) => {
           output.textContent = text.trim() || "(No text detected)";
         })
