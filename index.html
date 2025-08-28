@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image to Text (OCR)</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+    video, canvas, img {
+      max-width: 90%;
+      margin: 10px 0;
+    }
+    button, input {
+      margin: 5px;
+      padding: 10px;
+    }
+    #output {
+      margin-top: 15px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 10px;
+      width: 90%;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image to Text (OCR)</h1>
+
+  <!-- Webcam capture -->
+  <video id="video" autoplay playsinline></video><br>
+  <button id="capture">📸 Capture from Camera</button>
+
+  <!-- Upload -->
+  <input type="file" id="upload" accept="image/*"><br>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview" alt="Preview" />
+
+  <h2>Extracted Text:</h2>
+  <div id="output">No text yet...</div>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const preview = document.getElementById("preview");
+    const output = document.getElementById("output");
+
+    // Ask for camera access
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+        })
+        .catch(err => {
+          console.error("Camera access denied:", err);
+        });
+    }
+
+    // Capture from camera
+    document.getElementById("capture").addEventListener("click", () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      preview.src = dataUrl;
+      runOCR(dataUrl);
+    });
+
+    // Upload image
+    document.getElementById("upload").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        runOCR(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Run OCR with Tesseract.js
+    function runOCR(image) {
+      output.textContent = "⏳ Processing...";
+      Tesseract.recognize(image, 'eng', { logger: m => console.log(m) })
+        .then(({ data: { text } }) => {
+          output.textContent = text.trim() || "(No text detected)";
+        })
+        .catch(err => {
+          output.textContent = "❌ Error: " + err.message;
+        });
+    }
+  </script>
+</body>
+</html>
